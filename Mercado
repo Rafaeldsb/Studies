@@ -1,0 +1,100 @@
+import csv
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import math
+
+
+def read_data(file):
+    data = pd.read_csv(file)
+    return data
+
+data = read_data("C:\\Users\\Rafae\\Desktop\\Bovespa_Diario.csv")
+data.time = pd.to_datetime(data['Date'], format="%Y-%m-%d")
+
+cld = 20
+
+siz = data['Date'].size
+
+high_y = []
+high_x = []
+min_y = []
+min_x = []
+
+type = "Close"
+
+for i in range(cld, siz - cld + 1):
+    max_c = max(data[type][i - cld: cld + i])
+    min_c = min(data[type][i - cld: cld + i])
+    if max_c == data[type][i] or min_c == data[type][i] :
+        high_y.append(max_c)
+        high_x.append(pd.to_datetime(data["Date"][i]))
+        high_y.append(min_c)
+        high_x.append(pd.to_datetime(data["Date"][i]))
+
+
+highs_x = high_x
+highs_y = high_y
+lows_x = min_x
+lows_y = min_y
+ln = []
+hn = []
+
+pt = 1000
+
+for i in range(len(highs_y)):
+    # print(len(high_y))
+    med = highs_y[i]
+    n = 1
+    for e in range(i+1, len(highs_y)):
+        mod = abs(highs_y[i] - highs_y[e])
+        if mod <= pt:
+            n += 1
+            med += highs_y[e]
+            highs_y[e] = 0
+    highs_y[i] = med / n
+    hn.append(n)
+
+
+for i in range(len(lows_y)):
+    med = lows_y[i]
+    n = 1
+    for e in range(i+1, len(lows_y)):
+        mod = abs(lows_y[i] - lows_y[e])
+        if mod <= pt:
+            n += 1
+            med += lows_y[e]
+            lows_y[e] = 0
+    lows_y[i] = med / n
+    ln.append(n)
+
+
+def o(n, c, k = 3):
+    if c:
+        if n >= k:
+            return 'r-'
+        else:
+            return 'r--'
+    else:
+        if n >= k:
+            return 'g-'
+        else:
+            return 'g--'
+
+for i in range(len(highs_x)):
+
+    x = pd.to_datetime(data["Date"][siz-1])
+    plt.plot([highs_x[i], x], [highs_y[i], highs_y[i]], o(hn[i], True))
+for i in range(len(min_x)):
+    x = pd.to_datetime(data["Date"][siz-1])
+    #plt.plot([lows_x[i], x], [lows_y[i], lows_y[i]], o(ln[i], False))
+
+p = []
+for i in data["Volume"]:
+    p.append(i**(1/4)*1000)
+plt.plot(data.time, p, 'b--')
+plt.plot(data.time, data["Close"])
+plt.plot(data.time, data["High"])
+plt.plot(data.time, data["Low"])
+
+plt.show()
